@@ -81,6 +81,20 @@ recreate the web service after changing it:
 docker compose up -d --force-recreate web
 ```
 
+## Console login shows “Failed to fetch”
+
+Core-api must allow the web console's origin for browser requests.
+`HELIOS_CORS_ORIGINS` controls the allowed origins. If the console host or
+port changes, update both `NEXT_PUBLIC_API_URL` and `HELIOS_CORS_ORIGINS`,
+then recreate core-api:
+
+```sh
+curl -i -X OPTIONS http://localhost:8000/auth/login \
+  -H 'Origin: http://localhost:3000' \
+  -H 'Access-Control-Request-Method: POST' \
+  -H 'Access-Control-Request-Headers: content-type'
+```
+
 ## A PoC fails after another PoC
 
 Several PoCs intentionally mutate demo state: invoices, ledger entries,
