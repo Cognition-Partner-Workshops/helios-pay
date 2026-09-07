@@ -1,9 +1,19 @@
 # Security Swarm Scan Results
 
-Captured from real Security Swarm runs against `main` of
-`Cognition-Partner-Workshops/helios-pay-demo` on 2026-09-02. Every finding ID,
-ACU figure and duration below comes from the linked run — nothing here is
-illustrative.
+Captured from real Security Swarm runs. Every finding ID, ACU figure and
+duration below comes from the linked run — nothing here is illustrative.
+
+Two sets of runs are recorded:
+
+- The **five original runs** (baseline, runtime-validated, incremental,
+  ingestion) ran against `main` of `Cognition-Partner-Workshops/helios-pay-demo`
+  on 2026-09-02. That repository has since been deleted, so its GitHub links are
+  dead — **the scan links still work**, because scan pages live in the Devin
+  platform, not GitHub. These runs remain the richest evidence, and are the ones
+  the demo script quotes.
+- The **fresh runs against this repository** (2026-09-07) are in
+  "Fresh runs against `helios-pay`" below. Use them when someone asks whether the
+  numbers reproduce on the repo in front of them.
 
 ## Run summary
 
@@ -29,7 +39,7 @@ when you present:
 | Full (runtime-validated) | runtime | [scan-e888214a](https://partner-workshops.devinenterprise.com/code-scan/e888214a52b544a4ae3ebb4daa971b3d) | 39.4 | ~32m | 10 |
 | Ingestion (runtime-validated) | runtime | [scan-cd8a2a4f](https://partner-workshops.devinenterprise.com/code-scan/cd8a2a4f35c64203954da85d3904fed7) | 22.3 | ~45m | 8 |
 | Incremental (post-V16, runtime) | runtime | [scan-54c05905](https://partner-workshops.devinenterprise.com/code-scan/54c059058dca493a91c1ad28dcabf5ab) | 41.9 | ~46m | 10 |
-| Remediation (1 finding) | — | [PR #3](https://github.com/Cognition-Partner-Workshops/helios-pay-demo/pull/3) | 1.7 | ~4m | 1 |
+| Remediation (1 finding) | — | [PR #2](https://github.com/Cognition-Partner-Workshops/helios-pay/pull/2) | 1.7 | ~4m | 1 |
 
 Every ACU, session count and finding total above is read straight from Devin
 code-scan management — nothing is illustrative. Wall-clock is scan-create →
@@ -394,7 +404,7 @@ One finding was handed to Security Swarm for a fix, end to end.
 | Field | Result |
 |---|---|
 | Finding | `sfind-0e9a974579b643b999885a1291e5e8cd` (V02, cross-tenant invoice export, high) |
-| PR | **https://github.com/Cognition-Partner-Workshops/helios-pay-demo/pull/3** |
+| PR | **https://github.com/Cognition-Partner-Workshops/helios-pay/pull/2** |
 | Branch | `devin/1788330935-export-invoice-tenant-check` |
 | Commit | `20858da` |
 | ACUs | 1.73 |
@@ -429,10 +439,62 @@ Three things worth pointing at on screen:
 3. **404 vs 403 was preserved.** Missing invoices still 404; foreign-tenant
    invoices now 403.
 
-> ⚠️ **Do not merge PR #3.** It is a demo artifact. Merging it removes V02 from
-> the app and breaks the V02 exploit beat in `SCRIPT.md` for the next demo. Show
-> the diff and the green CI, then leave it open. If it is ever merged, revert on
-> a branch to restore the vulnerable state.
+> ⚠️ **Do not merge PR #2.** It is a demo artifact. Merging it removes V02 from
+> the app and breaks the V02 exploit beat in `WALKTHROUGH.md` for the next demo.
+> Show the diff and the green CI, then leave it open. If it is ever merged, revert
+> on a branch to restore the vulnerable state.
+
+---
+
+## Fresh runs against `helios-pay`
+
+Re-run on 2026-09-07 against `main` of this repository, with the same two
+profiles as the recorded runs. This `main` is **post-V16** (command injection is
+in) and **pre-remediation** (PR #2 is open, so V02 is still vulnerable), so it is
+not directly comparable to the original baseline.
+
+| Run | Scan link | ACUs | Sessions | Findings |
+|---|---|---:|---:|---|
+| Full (OWASP, runtime profile) | [scan-d503ef56](https://partner-workshops.devinenterprise.com/code-scan/d503ef56a2f845a69eb5bd160ef0070e) | 5.9 | 8 | 34 rows → **28 open** (8 critical, 14 high, 3 medium, 3 low), 6 dismissed as intra-scan duplicates |
+| Ingestion (SARIF + pentest CSV) | [scan-010d097e](https://partner-workshops.devinenterprise.com/code-scan/010d097e5ea44eb1b5d57876bd8c1c7a) | — | — | 47 imported → **11 open** (3 critical, 8 high), 36 dismissed (1 high, 7 medium, 28 low) |
+
+**The ingestion run reproduced the recorded result.** Same 47 inherited findings,
+same triage shape, and the same duplicate-detection reasoning — for example the
+pentest row PT-004 ("Public S3 document bucket") was dismissed as a duplicate of
+SARIF rule `V13-S3` on the same `infra/terraform/s3.tf` lines, with the SARIF copy
+kept as canonical. This is the run to show if anyone suspects the recorded
+ingestion numbers were cherry-picked.
+
+**The full run reached 15 of the 16 planted vulns**, missing only V15 (the
+vulnerable PyYAML pin) — the same gap as both recorded discovery runs, for the
+same reason (see "Honest gaps" #1). Confirmed present: V01 SQLi via `ORDER BY`,
+V02 (as three findings — export BOLA, document-listing BOLA, document path
+traversal), V03 refund TOCTOU, V04 SSRF (entry point, redirect-following, and the
+bypassable blocklist), V05 unauthenticated admin router, V06 JWT `alg=none`, V07
+copilot cross-tenant read, V08 `yaml.load` RCE, V09 Zip Slip, V10 stored XSS, V11
+hardcoded HMAC key and JWT secret fallback, V12 predictable reset token, V13 IaC
+(public S3, 5432 open to `0.0.0.0/0`, unencrypted RDS, publicly-accessible RDS,
+`Action:*` on `Resource:*`), V14 mass assignment, V16 OS command injection.
+
+One of those 15 is a **partial** hit worth stating accurately: on V07 the run
+reported the cross-tenant read facet of the copilot endpoint but never named
+prompt injection — the phrase appears nowhere in the run's findings. Do not claim
+it caught the prompt-injection facet.
+
+It also found a defect that was **not** planted: `POST
+/auth/password-reset/request` returns the reset token in the HTTP response
+(critical, account takeover of any user) — an amplifier of V12 that makes the
+seed-brute-force step unnecessary. Nobody wrote that one deliberately, which
+makes it a good answer to "does it only find what you told it to find?".
+
+> ⚠️ **Do not present this run as runtime-validated.** It used the
+> runtime-validated profile, but its findings carry no runtime evidence — no
+> stack boot, no live request/response transcripts — and it cost 5.9 ACUs against
+> the recorded runtime run's 39.4. Its orchestrator also stalled for ~90 minutes
+> after the threat-model stage before producing findings (see "Honest gaps" #8).
+> Treat it as a **static discovery run**, and use
+> [scan-e888214a](https://partner-workshops.devinenterprise.com/code-scan/e888214a52b544a4ae3ebb4daa971b3d)
+> when you need the runtime-validation beat.
 
 ---
 
@@ -483,7 +545,15 @@ Read these before you present. Every one of them is a better answer than a dodge
 7. **The scan parent sessions show `waiting_for_user`.** That is their idle state
    after writing findings, not an unfinished run. All five scans report
    `completed` in code-scan management.
-8. **PR #4 (this document) has no CI checks.** `.github/workflows/ci.yml` only
+8. **The fresh full run against this repo stalled, then recovered.** Its
+   orchestrator finished the threat-model stage (17 repo-specific matchers, 108
+   signals across 40 files) and then sat for ~90 minutes without launching an
+   investigation session; it later completed on its own with the 34 findings
+   above. A relaunch fired during the stall is still running and is a duplicate —
+   ignore it. If a scan you launch live goes quiet after the threat model, that is
+   the failure mode, and it is reported to Cognition. Do not launch a scan on
+   stage during a demo; show a recorded run.
+9. **PR #4 (this document) has no CI checks.** `.github/workflows/ci.yml` only
    triggers on `services/**`, `web/**` and the workflow file, so a docs-only
    change runs nothing. That is expected — it is not a green build, and it is not
    a broken one.
