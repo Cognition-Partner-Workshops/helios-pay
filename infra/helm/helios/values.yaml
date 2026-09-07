@@ -1,0 +1,12 @@
+replicaCount: 2
+
+image:
+  repository: helios-pay/web
+  tag: latest
+  pullPolicy: IfNotPresent
+
+service:
+  type: ClusterIP
+  port: 3000
+
+resources: {}
