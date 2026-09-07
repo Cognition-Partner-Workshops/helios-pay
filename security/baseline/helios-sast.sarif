@@ -1,0 +1,262 @@
+{
+  "$schema": "https://json.schemastore.org/sarif-2.1.0.json",
+  "version": "2.1.0",
+  "runs": [
+    {
+      "tool": {
+        "driver": {
+          "name": "HeliosSAST",
+          "version": "0.9.4"
+        }
+      },
+      "results": [
+        {
+          "ruleId": "STYLE001",
+          "level": "note",
+          "message": {"text": "Line exceeds the preferred width."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/routers/invoices.py"}, "region": {"startLine": 42}}}]
+        },
+        {
+          "ruleId": "STYLE001",
+          "level": "note",
+          "message": {"text": "Line exceeds the preferred width."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/routers/invoices.py"}, "region": {"startLine": 42}}}]
+        },
+        {
+          "ruleId": "STYLE002",
+          "level": "note",
+          "message": {"text": "Function has more branches than the style threshold."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/routers/auth.py"}, "region": {"startLine": 28}}}]
+        },
+        {
+          "ruleId": "STYLE003",
+          "level": "note",
+          "message": {"text": "Prefer an explicit return annotation."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/services/reset.py"}, "region": {"startLine": 12}}}]
+        },
+        {
+          "ruleId": "STYLE004",
+          "level": "note",
+          "message": {"text": "Module contains a broad service surface."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/routers/admin.py"}, "region": {"startLine": 18}}}]
+        },
+        {
+          "ruleId": "STYLE005",
+          "level": "note",
+          "message": {"text": "Consider extracting this repeated literal."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/seed.py"}, "region": {"startLine": 8}}}]
+        },
+        {
+          "ruleId": "STYLE006",
+          "level": "note",
+          "message": {"text": "Mutable collection is initialized at module scope."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/partner-gateway/src/routes/webhooks.ts"}, "region": {"startLine": 13}}}]
+        },
+        {
+          "ruleId": "STYLE007",
+          "level": "note",
+          "message": {"text": "Repeated status string could be centralized."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/ledger-worker/cmd/server.go"}, "region": {"startLine": 34}}}]
+        },
+        {
+          "ruleId": "STYLE008",
+          "level": "note",
+          "message": {"text": "Use a named constant for the retry count."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/partner-gateway/src/lib/dispatch.ts"}, "region": {"startLine": 20}}}]
+        },
+        {
+          "ruleId": "STYLE009",
+          "level": "note",
+          "message": {"text": "CSS declaration could use a design token."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/app/globals.css"}, "region": {"startLine": 7}}}]
+        },
+        {
+          "ruleId": "STYLE010",
+          "level": "note",
+          "message": {"text": "Prefer a semantic heading hierarchy."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/components/CopilotPanel.tsx"}, "region": {"startLine": 35}}}]
+        },
+        {
+          "ruleId": "STYLE011",
+          "level": "note",
+          "message": {"text": "Animation value is recomputed during render."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/lib/anim.ts"}, "region": {"startLine": 1}}}]
+        },
+        {
+          "ruleId": "STYLE012",
+          "level": "note",
+          "message": {"text": "Consider a shared loading state component."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/app/invoices/page.tsx"}, "region": {"startLine": 44}}}]
+        },
+        {
+          "ruleId": "STYLE013",
+          "level": "note",
+          "message": {"text": "Client component has multiple state variables."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/app/login/page.tsx"}, "region": {"startLine": 10}}}]
+        },
+        {
+          "ruleId": "STYLE014",
+          "level": "note",
+          "message": {"text": "Prefer a typed API response wrapper."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/lib/api.ts"}, "region": {"startLine": 16}}}]
+        },
+        {
+          "ruleId": "STYLE015",
+          "level": "note",
+          "message": {"text": "Empty response body is handled implicitly."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/partner-gateway/src/lib/dispatch.ts"}, "region": {"startLine": 35}}}]
+        },
+        {
+          "ruleId": "STYLE016",
+          "level": "note",
+          "message": {"text": "HTTP status mapping could be documented."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/ledger-worker/cmd/server.go"}, "region": {"startLine": 40}}}]
+        },
+        {
+          "ruleId": "STYLE017",
+          "level": "note",
+          "message": {"text": "Test fixture uses an inline value."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/partner-gateway/test/fixtures.ts"}, "region": {"startLine": 2}}}]
+        },
+        {
+          "ruleId": "STYLE018",
+          "level": "note",
+          "message": {"text": "Response text is truncated after collection."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/partner-gateway/src/lib/dispatch.ts"}, "region": {"startLine": 38}}}]
+        },
+        {
+          "ruleId": "STYLE019",
+          "level": "note",
+          "message": {"text": "Consider extracting the status badge class."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/app/invoices/page.tsx"}, "region": {"startLine": 77}}}]
+        },
+        {
+          "ruleId": "STYLE020",
+          "level": "note",
+          "message": {"text": "Form error copy could be localized."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/app/login/page.tsx"}, "region": {"startLine": 31}}}]
+        },
+        {
+          "ruleId": "STYLE021",
+          "level": "note",
+          "message": {"text": "Repository error wraps a driver message."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/ledger-worker/internal/ledger/repo.go"}, "region": {"startLine": 30}}}]
+        },
+        {
+          "ruleId": "STYLE022",
+          "level": "note",
+          "message": {"text": "Default environment value is intended for local use."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/core/config.py"}, "region": {"startLine": 10}}}]
+        },
+        {
+          "ruleId": "STYLE023",
+          "level": "note",
+          "message": {"text": "Request payload could use a shared schema."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/ledger-worker/cmd/server.go"}, "region": {"startLine": 20}}}]
+        },
+        {
+          "ruleId": "STYLE024",
+          "level": "note",
+          "message": {"text": "Link label could include the invoice number."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/app/invoices/[id]/page.tsx"}, "region": {"startLine": 67}}}]
+        },
+        {
+          "ruleId": "DECOY-D1",
+          "level": "warning",
+          "message": {"text": "SQL string concatenation detected; review for injection."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/routers/reports.py"}, "region": {"startLine": 29}}}]
+        },
+        {
+          "ruleId": "DECOY-D2",
+          "level": "warning",
+          "message": {"text": "Use of eval detected."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/cli.py"}, "region": {"startLine": 14}}}]
+        },
+        {
+          "ruleId": "DECOY-D3",
+          "level": "warning",
+          "message": {"text": "Hardcoded API key detected."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/partner-gateway/test/fixtures.ts"}, "region": {"startLine": 2}}}]
+        },
+        {
+          "ruleId": "DECOY-D5",
+          "level": "warning",
+          "message": {"text": "dangerouslySetInnerHTML requires review."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/components/Notes.tsx"}, "region": {"startLine": 22}}}]
+        },
+        {
+          "ruleId": "V08",
+          "level": "error",
+          "message": {"text": "Unsafe YAML loader can construct arbitrary Python objects."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/services/bulk_import.py"}, "region": {"startLine": 6}}}]
+        },
+        {
+          "ruleId": "V11",
+          "level": "error",
+          "message": {"text": "Real-looking webhook HMAC secret is embedded in source."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/partner-gateway/src/config.ts"}, "region": {"startLine": 1}}}]
+        },
+        {
+          "ruleId": "V10",
+          "level": "error",
+          "message": {"text": "Invoice memo HTML is rendered without sanitization."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/components/InvoiceMemo.tsx"}, "region": {"startLine": 11}}}]
+        },
+        {
+          "ruleId": "V13-S3",
+          "level": "error",
+          "message": {"text": "S3 bucket allows public object reads."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "infra/terraform/s3.tf"}, "region": {"startLine": 3}}}]
+        },
+        {
+          "ruleId": "V13-DB",
+          "level": "error",
+          "message": {"text": "Database is publicly accessible without storage encryption."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "infra/terraform/rds.tf"}, "region": {"startLine": 14}}}]
+        },
+        {
+          "ruleId": "V13-NET",
+          "level": "error",
+          "message": {"text": "Postgres security group ingress is open to the internet."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "infra/terraform/network.tf"}, "region": {"startLine": 9}}}]
+        },
+        {
+          "ruleId": "V13-IAM",
+          "level": "error",
+          "message": {"text": "IAM policy grants all actions on all resources."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "infra/terraform/iam.tf"}, "region": {"startLine": 7}}}]
+        },
+        {
+          "ruleId": "V15-PY-yaml",
+          "level": "error",
+          "message": {"text": "PyYAML 5.3.1 is affected by CVE-2020-14343."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/requirements.txt"}, "region": {"startLine": 4}}}]
+        },
+        {
+          "ruleId": "DEP-001",
+          "level": "warning",
+          "message": {"text": "Prototype pollution advisory applies to a transitive npm dependency."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/package-lock.json"}, "region": {"startLine": 1120}}}]
+        },
+        {
+          "ruleId": "DEP-002",
+          "level": "warning",
+          "message": {"text": "Redis client dependency has a low-severity maintenance advisory."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/ledger-worker/go.mod"}, "region": {"startLine": 6}}}]
+        },
+        {
+          "ruleId": "STYLE025",
+          "level": "note",
+          "message": {"text": "Wildcard import pattern is not used."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "services/core-api/app/main.py"}, "region": {"startLine": 1}}}]
+        },
+        {
+          "ruleId": "STYLE026",
+          "level": "note",
+          "message": {"text": "Health response could expose a typed contract."},
+          "locations": [{"physicalLocation": {"artifactLocation": {"uri": "web/app/healthz/route.ts"}, "region": {"startLine": 4}}}]
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,11 @@
+name: Helios Pay demo deployment
+
+on:
+  workflow_dispatch:
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Describe deployment
+        run: echo "Helios Pay deployment preview"

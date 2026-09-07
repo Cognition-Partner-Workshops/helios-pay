@@ -1,0 +1,17 @@
+name: Helios Pay demo deploy
+
+on:
+  workflow_dispatch:
+
+env:
+  DEPLOY_TOKEN: "helios_deploy_demo_7e1c9a4f_fake"
+  AWS_SECRET_ACCESS_KEY: "AKIAHELIOSDEMOFAKE0000"
+
+jobs:
+  dry-run:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Announce deployment preview
+        run: echo "Deployment workflow is intentionally a local demo dry run"
+      - name: Print target
+        run: echo "No real cloud resources will be changed"
