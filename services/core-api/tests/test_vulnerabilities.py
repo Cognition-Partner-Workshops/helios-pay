@@ -14,10 +14,16 @@ def test_invoice_get_enforces_tenant(client, tenant_a_token):
     assert response.status_code == 403
 
 
-def test_export_leaks_cross_tenant(client, tenant_a_token):
+def test_export_enforces_tenant(client, tenant_a_token):
     response = client.get(f"/invoices/export?invoice_id={TEST_INVOICE_B}", headers=auth_header(tenant_a_token))
+    assert response.status_code == 403
+    assert "Foreign Customer" not in response.text
+
+
+def test_export_own_tenant_invoice(client, tenant_a_token):
+    response = client.get(f"/invoices/export?invoice_id={TEST_INVOICE_A}", headers=auth_header(tenant_a_token))
     assert response.status_code == 200
-    assert "Foreign Customer" in response.text
+    assert "Test Acme Customer" in response.text
 
 
 def test_jwt_alg_none_accepted(client):
