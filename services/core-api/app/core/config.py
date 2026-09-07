@@ -9,6 +9,7 @@ class Settings(BaseSettings):
     redis_url: str = "redis://redis:6379/0"
     webhook_hmac_key: str = "local-development-only"
     helios_llm_mode: str = "stub"
+    helios_cors_origins: str = "http://localhost:3000"
     core_api_url: str = "http://core-api:8000"
     ledger_url: str = "http://ledger-worker:8090"
     gateway_url: str = "http://partner-gateway:8080"

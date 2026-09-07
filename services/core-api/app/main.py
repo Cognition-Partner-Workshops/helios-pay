@@ -1,4 +1,5 @@
 from fastapi import Depends, FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
 from app.core.deps import get_current_claims
@@ -6,6 +7,12 @@ from app.routers import admin, auth, copilot, diagnostics, documents, imports, i
 from app.routers.health import router as health_router
 
 app = FastAPI(title="Helios Pay Core API", version="0.1.0")
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[o.strip() for o in get_settings().helios_cors_origins.split(",") if o.strip()],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 app.include_router(health_router)
 app.include_router(admin.router)
 app.include_router(auth.router)
