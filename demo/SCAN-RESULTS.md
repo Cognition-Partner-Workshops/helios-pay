@@ -17,7 +17,16 @@ Two sets of runs are recorded:
 
 ## Run summary
 
-There are **two generations of scans** on this repo, and the distinction matters
+> **If you only read one section:** the run to present from is the deep run with
+> **per-finding isolated sandboxes**,
+> [scan-3e7d46ee](https://partner-workshops.devinenterprise.com/code-scan/3e7d46eeffcf4a51bcd680595a062619)
+> — 40 sessions, ~9.6 ACUs, 28 findings (7 P0 / 15 P1 / 6 P2), 22
+> runtime-confirmed, 0 false positives. It is written up in
+> "[Deep run with per-finding isolated sandboxes](#deep-run-with-per-finding-isolated-sandboxes-scan-of-record)"
+> below, and it is the run `WALKTHROUGH.md` is built on. The generations below
+> are the earlier history, kept for comparison.
+
+There are **three generations of scans** on this repo, and the distinction matters
 when you present:
 
 - **Baseline (static discovery)** — the first pass with the stock profiles. Fast,
@@ -31,6 +40,11 @@ when you present:
   misconfigurations with no HTTP surface to exploit, and are kept on static
   reasoning. See "Honest gaps" #2 for exactly what the runtime stage did and did
   not prove.
+- **Deep, per-finding isolated validation** — the current generation and the scan
+  of record. Deep effort, with the profile rewritten so that **every finding gets
+  its own sandbox and its own freshly-booted stack**, plus a standalone replayable
+  exploit script and transcript per finding, instead of validating a batch against
+  one shared stack.
 
 | Run | Generation | Scan link | ACUs | Wall-clock | Sessions |
 |---|---|---|---:|---:|---:|
@@ -40,6 +54,7 @@ when you present:
 | Ingestion (runtime-validated) | runtime | [scan-cd8a2a4f](https://partner-workshops.devinenterprise.com/code-scan/cd8a2a4f35c64203954da85d3904fed7) | 22.3 | ~45m | 8 |
 | Incremental (post-V16, runtime) | runtime | [scan-54c05905](https://partner-workshops.devinenterprise.com/code-scan/54c059058dca493a91c1ad28dcabf5ab) | 41.9 | ~46m | 10 |
 | Remediation (1 finding) | — | [PR #2](https://github.com/Cognition-Partner-Workshops/helios-pay/pull/2) | 1.7 | ~4m | 1 |
+| **Deep, per-finding isolated (scan of record)** | **isolated** | [**scan-3e7d46ee**](https://partner-workshops.devinenterprise.com/code-scan/3e7d46eeffcf4a51bcd680595a062619) | **~9.6** | — | **40** |
 
 Every ACU, session count and finding total above is read straight from Devin
 code-scan management — nothing is illustrative. Wall-clock is scan-create →
@@ -493,8 +508,57 @@ makes it a good answer to "does it only find what you told it to find?".
 > the recorded runtime run's 39.4. Its orchestrator also stalled for ~90 minutes
 > after the threat-model stage before producing findings (see "Honest gaps" #8).
 > Treat it as a **static discovery run**, and use
-> [scan-e888214a](https://partner-workshops.devinenterprise.com/code-scan/e888214a52b544a4ae3ebb4daa971b3d)
-> when you need the runtime-validation beat.
+> [scan-3e7d46ee](https://partner-workshops.devinenterprise.com/code-scan/3e7d46eeffcf4a51bcd680595a062619)
+> (below) when you need the runtime-validation beat.
+
+---
+
+## Deep run with per-finding isolated sandboxes (scan of record)
+
+Run on 2026-09-08 against `main` of this repository. This is the run
+[`WALKTHROUGH.md`](WALKTHROUGH.md) presents from, and it supersedes the earlier
+runtime reruns for the runtime-validation beat.
+
+| Field | Result |
+|---|---|
+| Scan link | https://partner-workshops.devinenterprise.com/code-scan/3e7d46eeffcf4a51bcd680595a062619 |
+| Profile | **OWASP Top 10 — Helios Pay (runtime-validated)** (`csprof-bd94e758…`), rewritten to require one isolated sandbox per finding |
+| Effort / mode | **deep** / unattended |
+| Session count | **40** (investigators + one dedicated `validate <id>` child per finding) |
+| ACUs consumed | **~9.6** |
+| Total findings | **28** — 7 P0 · 15 P1 · 6 P2 |
+| Runtime-confirmed exploitable | **22 of 28** |
+| False positives | **0** |
+| Decoys flagged | **0 of 7** |
+
+**What is different about this run, and why it is the one to show.** The earlier
+runtime reruns validated findings against a *shared* booted stack, which is why
+"Honest gaps" #2 used to say the runtime evidence was stage-level. This run
+changed that: each finding got its **own validation session in its own sandbox**,
+which booted a fresh stack, ran the exploit live against that stack alone, saved
+a **standalone replayable script plus a full request/response transcript**, and
+tore the stack down before the next finding. Reproductions therefore cannot leak
+into each other, and any single finding can be handed over and replayed on its
+own. Open one `validate <id>` child on the scan page to show this on screen.
+
+**Two validations worth contrasting on stage** — this pairing is the honesty beat:
+
+| Finding | Verdict | Evidence |
+|---|---|---|
+| `sfind-9aad37d3…` JWT predictable-secret fallback | **confirmed** | Booted with `HELIOS_JWT_SECRET` unset, confirmed the `local-development-only` fallback, forged HS256 admin/operator tokens as a viewer, received 200s where a viewer normally gets 403. Script + transcript attached. |
+| `sfind-1d5a6cca…` wildcard IAM (`actions=["*"]`, `resources=["*"]`) | **static-only / inconclusive** | The policy is genuinely present in `infra/terraform/iam.tf`, but the local stack applies no AWS identity (no credentials, no SDK path), so it was **not** claimed as runtime-proven. Recorded with the reason — not dismissed, not overstated. |
+
+**Chain result.** The run composed individual findings into a kill chain rather
+than listing them flat: OS command injection (`sfind-8e985b1a…`, critical) reached
+via the `alg=none` JWT bypass (`sfind-529ab54e…`, the "master key"), amplified by
+the wildcard IAM role — an **anonymous → RCE** and **anonymous → full AWS account
+takeover** path. State the qualifier when you present it: the injection and the
+JWT bypass were reproduced live; the IAM hop is the static-only one above, so the
+account-takeover end of the chain is *modeled*, not locally exercised.
+
+> Finding IDs cited in `WALKTHROUGH.md` all come from this run. Note that the raw
+> finding listing for the scan contains duplicate and dismissed rows; the 28 / 7 /
+> 15 / 6 totals above are the deduplicated set, which is what to quote.
 
 ---
 
@@ -513,14 +577,17 @@ Read these before you present. Every one of them is a better answer than a dodge
    (V08, critical) but not the *vulnerable version pin*. Complementary, not
    overlapping. **Runtime validation did not close this gap**, which is the
    sharper version of the same point.
-2. **Runtime validation is evidenced at the stage level, not per-finding in this
-   file.** What is independently verified: the validation children booted the
-   full stack (`docker compose up -d --build`, all services healthy),
-   authenticated via `POST /auth/login`, and issued live exploit requests against
-   `localhost:8000` and `localhost:8090`. Per-finding request/response transcripts
-   live on the scan pages, not in this document — if you want to show a specific
-   exploit transcript on screen, open the finding in the UI during dry-run. Do not
-   claim "every finding has an attached PoC transcript" from this file alone.
+2. **Runtime evidence differs by run — quote the right one.** For the earlier
+   runtime reruns (`scan-e888214a`, `scan-cd8a2a4f`, `scan-54c05905`) validation is
+   evidenced at the **stage level**: the children booted the full stack
+   (`docker compose up -d --build`), authenticated via `POST /auth/login`, and
+   issued live exploit requests, but against a shared stack. For the deep run
+   (`scan-3e7d46ee`, "scan of record" above) it is **per-finding**: each finding has
+   its own sandbox, its own booted stack, and its own saved script + transcript.
+   Either way the transcripts live on the scan pages, not in this document — open
+   the finding in the UI to show one. And note that per-finding isolation does not
+   mean everything was proven: 22 of 28 are runtime-confirmed, the rest (including
+   the IaC findings) are kept on static reasoning and labelled as such.
 3. **Wall-clock for the runtime runs is scan-create → report-written and is
    approximate (±5 min).** The parent sessions idle in `waiting_for_user` after
    the report lands, which inflates any "last activity" reading. ACUs, session
