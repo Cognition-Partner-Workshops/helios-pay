@@ -3,6 +3,7 @@ package ledger
 import (
 	"context"
 	"database/sql"
+	"errors"
 	"fmt"
 
 	_ "github.com/jackc/pgx/v5/stdlib"
@@ -20,37 +21,59 @@ func NewPostgresRepo(databaseURL string) (*PostgresRepo, error) {
 	return &PostgresRepo{db: db}, nil
 }
 
-func (repo *PostgresRepo) CurrentBalance(ctx context.Context, invoiceID string) (int64, error) {
-	var balance int64
-	err := repo.db.QueryRowContext(
+// ApplyRefund checks the invoice balance and records the refund in one
+// transaction. The invoice row is locked first so concurrent refunds for the
+// same invoice serialize and the second one sees the first one's entry.
+func (repo *PostgresRepo) ApplyRefund(ctx context.Context, invoiceID string, amount int64) (int64, error) {
+	tx, err := repo.db.BeginTx(ctx, nil)
+	if err != nil {
+		return 0, fmt.Errorf("begin refund: %w", err)
+	}
+	defer func() { _ = tx.Rollback() }()
+
+	var tenantID string
+	err = tx.QueryRowContext(
 		ctx,
-		"SELECT balance_after FROM ledger_entries WHERE invoice_id = $1 ORDER BY id DESC LIMIT 1",
+		"SELECT tenant_id FROM invoices WHERE id = $1 FOR UPDATE",
+		invoiceID,
+	).Scan(&tenantID)
+	if errors.Is(err, sql.ErrNoRows) {
+		return 0, ErrInvoiceNotFound
+	}
+	if err != nil {
+		return 0, fmt.Errorf("lock invoice: %w", err)
+	}
+
+	var balance int64
+	err = tx.QueryRowContext(
+		ctx,
+		`SELECT COALESCE(SUM(CASE kind WHEN 'refund' THEN -amount_cents ELSE amount_cents END), 0)
+		 FROM ledger_entries WHERE invoice_id = $1`,
 		invoiceID,
 	).Scan(&balance)
 	if err != nil {
 		return 0, fmt.Errorf("read invoice balance: %w", err)
 	}
-	return balance, nil
-}
+	if balance < amount {
+		return 0, ErrInsufficientBalance
+	}
 
-func (repo *PostgresRepo) InsertRefund(
-	ctx context.Context,
-	invoiceID string,
-	amount int64,
-	balanceAfter int64,
-) error {
-	_, err := repo.db.ExecContext(
+	balanceAfter := balance - amount
+	_, err = tx.ExecContext(
 		ctx,
 		`INSERT INTO ledger_entries
 			(id, tenant_id, invoice_id, kind, amount_cents, balance_after)
-		 VALUES (gen_random_uuid(), (SELECT tenant_id FROM invoices WHERE id = $1),
-			$1, 'refund', $2, $3)`,
+		 VALUES (gen_random_uuid(), $1, $2, 'refund', $3, $4)`,
+		tenantID,
 		invoiceID,
 		amount,
 		balanceAfter,
 	)
 	if err != nil {
-		return fmt.Errorf("insert refund: %w", err)
+		return 0, fmt.Errorf("insert refund: %w", err)
 	}
-	return nil
+	if err := tx.Commit(); err != nil {
+		return 0, fmt.Errorf("commit refund: %w", err)
+	}
+	return balanceAfter, nil
 }

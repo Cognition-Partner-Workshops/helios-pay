@@ -5,16 +5,20 @@ import (
 	"errors"
 	"os"
 	"strings"
-	"time"
 
 	"github.com/redis/go-redis/v9"
 )
 
-var ErrInsufficientBalance = errors.New("insufficient balance")
+var (
+	ErrInsufficientBalance = errors.New("insufficient balance")
+	ErrInvalidAmount       = errors.New("refund amount must be positive")
+	ErrInvoiceNotFound     = errors.New("invoice not found")
+)
 
+// Repo persists ledger entries. ApplyRefund must check the balance and write
+// the refund atomically so concurrent refunds cannot both pass the check.
 type Repo interface {
-	CurrentBalance(ctx context.Context, invoiceID string) (int64, error)
-	InsertRefund(ctx context.Context, invoiceID string, amount, balanceAfter int64) error
+	ApplyRefund(ctx context.Context, invoiceID string, amount int64) (int64, error)
 }
 
 type Service struct {
@@ -44,19 +48,10 @@ func (service *Service) Refund(ctx context.Context, invoiceID string, amount int
 	if service.repo == nil {
 		return 0, errors.New("ledger repository is not configured")
 	}
-	balance, err := service.repo.CurrentBalance(ctx, invoiceID)
-	if err != nil {
-		return 0, err
+	if amount <= 0 {
+		return 0, ErrInvalidAmount
 	}
-	if balance < amount {
-		return 0, ErrInsufficientBalance
-	}
-	time.Sleep(150 * time.Millisecond)
-	balanceAfter := balance - amount
-	if err := service.repo.InsertRefund(ctx, invoiceID, amount, balanceAfter); err != nil {
-		return 0, err
-	}
-	return balanceAfter, nil
+	return service.repo.ApplyRefund(ctx, invoiceID, amount)
 }
 
 func postgresDSN(databaseURL string) string {
