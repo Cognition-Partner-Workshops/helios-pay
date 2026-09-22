@@ -1,6 +1,10 @@
 import { createHmac } from "node:crypto";
 
 import { WEBHOOK_HMAC_KEY } from "../config";
+import { assertAllowedUrl } from "./urlguard";
+
+const MAX_REDIRECTS = 5;
+const ALLOWED_PROTOCOLS = new Set(["http:", "https:"]);
 
 export interface Webhook {
   id: string;
@@ -14,6 +18,13 @@ export interface DispatchResult {
   bodySnippet: string;
 }
 
+function assertDispatchableUrl(rawUrl: string): void {
+  assertAllowedUrl(rawUrl);
+  if (!ALLOWED_PROTOCOLS.has(new URL(rawUrl).protocol)) {
+    throw new Error("webhook URL scheme is not allowed");
+  }
+}
+
 export async function dispatchWebhook(
   webhook: Webhook,
   payload: Record<string, unknown> = {},
@@ -22,7 +33,8 @@ export async function dispatchWebhook(
   const signature = createHmac("sha256", WEBHOOK_HMAC_KEY).update(body).digest("hex");
   let targetUrl = webhook.url;
 
-  for (let redirectCount = 0; redirectCount <= 5; redirectCount += 1) {
+  for (let redirectCount = 0; redirectCount <= MAX_REDIRECTS; redirectCount += 1) {
+    assertDispatchableUrl(targetUrl);
     const response = await fetch(targetUrl, {
       method: "POST",
       headers: {
