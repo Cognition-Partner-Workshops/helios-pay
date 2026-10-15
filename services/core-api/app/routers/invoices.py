@@ -40,10 +40,15 @@ def list_invoices(
 
 
 @router.get("/export")
-def export_invoice(invoice_id: uuid.UUID, db=Depends(get_db)):
+def export_invoice(
+    invoice_id: uuid.UUID,
+    claims: Claims = Depends(get_current_claims),
+    db=Depends(get_db),
+):
     invoice = db.get(Invoice, invoice_id)
     if invoice is None:
         raise HTTPException(status_code=404, detail="Invoice not found")
+    require_tenant(invoice, claims)
     stream = io.StringIO()
     writer = csv.writer(stream)
     writer.writerow(["id", "tenant_id", "number", "customer_name", "amount_cents", "status"])
