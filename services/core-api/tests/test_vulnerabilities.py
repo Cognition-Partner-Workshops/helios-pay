@@ -77,11 +77,30 @@ def test_legacy_route_is_not_mounted_by_default(client):
     assert client.get("/legacy/debug").status_code == 404
 
 
-def test_v16_command_injection(client, tenant_a_token):
+def test_v16_command_injection_is_rejected(client, tenant_a_token):
+    for host in (
+        "127.0.0.1; echo INJECTED_MARKER",
+        "127.0.0.1 | echo INJECTED_MARKER",
+        "$(echo INJECTED_MARKER)",
+        "`echo INJECTED_MARKER`",
+        "127.0.0.1 && echo INJECTED_MARKER",
+        "-s",
+    ):
+        response = client.post(
+            "/diagnostics/connectivity",
+            headers=auth_header(tenant_a_token),
+            json={"host": host},
+        )
+        assert response.status_code == 422, host
+        assert "output" not in response.json()
+
+
+def test_v16_connectivity_accepts_valid_host(client, tenant_a_token):
     response = client.post(
         "/diagnostics/connectivity",
         headers=auth_header(tenant_a_token),
-        json={"host": "127.0.0.1; echo INJECTED_MARKER"},
+        json={"host": "localhost"},
     )
     assert response.status_code == 200
-    assert "INJECTED_MARKER" in response.json()["output"]
+    assert response.json()["host"] == "localhost"
+    assert response.json()["exit_code"] == 0
