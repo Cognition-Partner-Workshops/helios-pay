@@ -1,5 +1,9 @@
-import jwt
+from datetime import datetime, timedelta, timezone
 
+import jwt
+import pytest
+
+from app.core.config import get_settings
 from app.db.session import SessionLocal
 from app.models import Invoice
 from tests.conftest import TEST_INVOICE_A, TEST_INVOICE_B, TEST_USER_A
@@ -7,6 +11,21 @@ from tests.conftest import TEST_INVOICE_A, TEST_INVOICE_B, TEST_USER_A
 
 def auth_header(token):
     return {"Authorization": f"Bearer {token}"}
+
+
+@pytest.fixture
+def operator_token():
+    return jwt.encode(
+        {
+            "sub": str(TEST_USER_A),
+            "tenant_id": "00000000-0000-0000-0000-0000000000a1",
+            "role": "operator",
+            "aud": "helios",
+            "exp": datetime.now(timezone.utc) + timedelta(minutes=5),
+        },
+        get_settings().helios_jwt_secret,
+        algorithm="HS256",
+    )
 
 
 def test_invoice_get_enforces_tenant(client, tenant_a_token):
@@ -85,3 +104,26 @@ def test_v16_command_injection(client, tenant_a_token):
     )
     assert response.status_code == 200
     assert "INJECTED_MARKER" in response.json()["output"]
+
+
+def test_bulk_import_rejects_python_object_tags(client, operator_token, tmp_path):
+    marker = tmp_path / "helios-yaml-regression"
+    payload = f'!!python/object/apply:os.system ["touch {marker}"]'.encode()
+    response = client.post(
+        "/invoices/bulk-import",
+        headers=auth_header(operator_token),
+        files={"file": ("payload.yaml", payload, "application/yaml")},
+    )
+    assert response.status_code == 422
+    assert not marker.exists()
+
+
+def test_bulk_import_accepts_plain_yaml_list(client, operator_token):
+    payload = b"- number: BULK-001\n  amount_cents: 1000\n"
+    response = client.post(
+        "/invoices/bulk-import",
+        headers=auth_header(operator_token),
+        files={"file": ("payload.yaml", payload, "application/yaml")},
+    )
+    assert response.status_code == 200
+    assert response.json() == {"records": 1}
