@@ -6,7 +6,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test": "node --experimental-strip-types --test tests/*.test.mjs"
   },
   "dependencies": {
     "dompurify": "^3.1.7",
@@ -21,6 +22,7 @@
     "@types/react-dom": "18.3.0",
     "eslint": "8.57.1",
     "eslint-config-next": "14.2.35",
+    "jsdom": "^25.0.1",
     "typescript": "5.6.2"
   }
 }
