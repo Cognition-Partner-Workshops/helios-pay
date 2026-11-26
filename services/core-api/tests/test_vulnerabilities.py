@@ -1,4 +1,6 @@
 import jwt
+import pytest
+import yaml
 
 from app.db.session import SessionLocal
 from app.models import Invoice
@@ -85,3 +87,21 @@ def test_v16_command_injection(client, tenant_a_token):
     )
     assert response.status_code == 200
     assert "INJECTED_MARKER" in response.json()["output"]
+
+
+def test_v15_pyyaml_full_load_rejects_cve_2020_14343_payload(tmp_path):
+    # Regression test: PyYAML < 5.4 runs this payload from yaml.full_load (CVE-2020-14343).
+    marker = tmp_path / "cve-2020-14343"
+    payload = f"""
+- !!python/object/new:str
+    args: []
+    state: !!python/tuple
+    - "open({str(marker)!r}, 'w').close()"
+    - !!python/object/new:staticmethod
+      args: [0]
+      state:
+        update: !!python/name:exec
+"""
+    with pytest.raises(yaml.constructor.ConstructorError):
+        yaml.full_load(payload)
+    assert not marker.exists()
