@@ -68,6 +68,22 @@ jobs:
   ledger-worker:
     if: github.event_name == 'pull_request' || contains(join(github.event.commits.*.modified, ' '), 'services/ledger-worker')
     runs-on: ubuntu-latest
+    env:
+      LEDGER_TEST_DATABASE_URL: postgres://helios:helios@localhost:5432/helios
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: helios
+          POSTGRES_PASSWORD: helios
+          POSTGRES_DB: helios
+        options: >-
+          --health-cmd "pg_isready -U helios -d helios"
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+        ports:
+          - 5432:5432
     defaults:
       run:
         working-directory: services/ledger-worker
