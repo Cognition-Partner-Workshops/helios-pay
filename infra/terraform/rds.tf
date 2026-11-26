@@ -9,8 +9,8 @@ resource "aws_db_instance" "postgres" {
   password               = var.db_password
   db_subnet_group_name   = var.db_subnet_group_name
   vpc_security_group_ids = [aws_security_group.application.id]
-  storage_encrypted      = false
-  publicly_accessible    = true
+  storage_encrypted      = true
+  publicly_accessible    = false
   skip_final_snapshot    = true
 
   tags = local.common_tags
