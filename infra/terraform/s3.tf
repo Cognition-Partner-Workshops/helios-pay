@@ -1,21 +1,22 @@
 resource "aws_s3_bucket" "documents" {
   bucket = "${local.name_prefix}-documents"
-  acl    = "public-read"
 
   tags = local.common_tags
 }
 
-resource "aws_s3_bucket_policy" "documents_public_read" {
+resource "aws_s3_bucket_ownership_controls" "documents" {
   bucket = aws_s3_bucket.documents.id
 
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [{
-      Sid       = "PublicDocumentRead"
-      Effect    = "Allow"
-      Principal = "*"
-      Action    = "s3:GetObject"
-      Resource  = "${aws_s3_bucket.documents.arn}/*"
-    }]
-  })
+  rule {
+    object_ownership = "BucketOwnerEnforced"
+  }
+}
+
+resource "aws_s3_bucket_public_access_block" "documents" {
+  bucket = aws_s3_bucket.documents.id
+
+  block_public_acls       = true
+  block_public_policy     = true
+  ignore_public_acls      = true
+  restrict_public_buckets = true
 }
