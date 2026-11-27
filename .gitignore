@@ -24,6 +24,10 @@ npm-debug.log*
 services/ledger-worker/bin/
 *.test
 
+# --- Terraform ---
+.terraform/
+.terraform.lock.hcl
+
 # --- Misc ---
 .DS_Store
 *.log
