@@ -43,7 +43,7 @@ providing an isolated foundation for later security exercises.
 | `partner-gateway` | Node 22 / TypeScript / Express | 8080 | partner webhook registration, outbound callbacks, SARIF/CSV import |
 | `ledger-worker` | Go 1.22 + Redis | 8090 | balance ledger, refunds, settlement jobs |
 | `web` | Next.js 14 / React 18 | 3000 | operator console and Support Copilot |
-| `statement-service` | PHP 8.5 / Apache mod_php | 8095 | partner remittance-advice CSV upload/listing (**intentionally vulnerable PHP runtime**) |
+| `statement-service` | PHP 8.5 / Apache mod_php | 8095 | partner remittance-advice CSV upload/listing |
 | `postgres` | `postgres:16` | 5432 | shared `helios` database |
 | `redis` | `redis:7` | 6379 | ledger locks and queues |
 

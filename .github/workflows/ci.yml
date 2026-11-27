@@ -105,14 +105,7 @@ jobs:
         working-directory: services/statement-service
     steps:
       - uses: actions/checkout@v4
-      # Affected (intentionally vulnerable) runtime: tests/run.php asserts the
-      # build is below the PHP2Shell patched floor, so upgrading PHP fails CI by
-      # design — the "vulnerability is gone" signal for this demo.
-      - uses: shivammathur/setup-php@v2
-        with:
-          php-version: "8.5"
-          ini-values: >-
-            memory_limit=64M,
-            session.upload_progress.enabled=On,
-            session.upload_progress.cleanup=Off
-      - run: php tests/run.php
+      # Test the image that ships: tests/run.php fails if its PHP runtime is
+      # affected by PHP2Shell (CVE-2026-109618, CVE-2026-109619).
+      - run: docker build --pull -t statement-service:ci .
+      - run: docker run --rm statement-service:ci php tests/run.php

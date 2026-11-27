@@ -3,12 +3,11 @@
 declare(strict_types=1);
 
 /*
- * Static regression tests for the statement-service PHP2Shell demo.
+ * Regression tests for the statement-service.
  *
- * These run in CI on the service's own (affected) PHP runtime. They assert the
- * runtime ships below the patched floor, so bumping PHP to a fixed release
- * correctly breaks this test — the intended "the vulnerability is gone" signal
- * for an intentionally-vulnerable demo.
+ * The version-logic checks are portable. The runtime checks run inside the
+ * service image (STATEMENT_RUNTIME_CHECKS=1) and fail if the image ships a PHP
+ * build affected by PHP2Shell (CVE-2026-109618, CVE-2026-109619).
  */
 
 require __DIR__ . '/../src/Version.php';
@@ -38,19 +37,17 @@ check('8.4.27 is patched', !Version::isAffected('8.4.27'));
 check('7.4.33 is affected', Version::isAffected('7.4.33'));
 check('patched floor for 8.5.x', Version::patchedFloorFor('8.5.11') === '8.5.12');
 
-// Runtime-bound checks: only meaningful on the service's own affected image, so
-// they are gated behind STATEMENT_RUNTIME_CHECKS (set in the Dockerfile). Generic
-// CI runs the portable logic above against whatever PHP it has.
+// Runtime-bound checks: only meaningful on the service's own image, so they are
+// gated behind STATEMENT_RUNTIME_CHECKS (set in the Dockerfile).
 if (getenv('STATEMENT_RUNTIME_CHECKS') === '1') {
-    // The service runtime must itself be an affected build (the demo precondition).
-    check('runtime ' . PHP_VERSION . ' is an affected PHP build', Version::isAffected(PHP_VERSION));
+    check('runtime ' . PHP_VERSION . ' is not an affected PHP build', !Version::isAffected(PHP_VERSION));
 
-    // The exploitation preconditions from the advisories must be configured.
-    check('memory_limit is finite (controllable OOM)', (string) ini_get('memory_limit') !== '-1');
-    check('session.upload_progress.enabled is on', (bool) ini_get('session.upload_progress.enabled'));
-    check('session.upload_progress.cleanup is off', !((bool) ini_get('session.upload_progress.cleanup')));
+    // Hardening from conf/php.ini (defence in depth, not the fix).
+    check('session.upload_progress.enabled is off', !((bool) ini_get('session.upload_progress.enabled')));
+    check('display_errors is off', !filter_var(ini_get('display_errors'), FILTER_VALIDATE_BOOLEAN));
+    check('expose_php is off', !((bool) ini_get('expose_php')));
 } else {
-    echo "SKIP  runtime/ini preconditions (set STATEMENT_RUNTIME_CHECKS=1 on the affected image)\n";
+    echo "SKIP  runtime/ini checks (set STATEMENT_RUNTIME_CHECKS=1 on the service image)\n";
 }
 
 // The remittance capability parses an advice CSV.
