@@ -27,7 +27,7 @@ test:
 	cd services/core-api && pytest
 	cd services/partner-gateway && npm test
 	cd services/ledger-worker && go test ./...
-	cd web && npm run build
+	cd web && npm test && npm run build
 	docker compose run --rm --no-deps -T statement-service php tests/run.php
 
 lint:
