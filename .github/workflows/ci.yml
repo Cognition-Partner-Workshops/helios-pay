@@ -114,3 +114,23 @@ jobs:
       - run: terraform fmt -check -recursive
       - run: terraform validate
       - run: terraform test
+
+  statement-service:
+    if: github.event_name == 'pull_request' || contains(join(github.event.commits.*.modified, ' '), 'services/statement-service')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: services/statement-service
+    steps:
+      - uses: actions/checkout@v4
+      # Affected (intentionally vulnerable) runtime: tests/run.php asserts the
+      # build is below the PHP2Shell patched floor, so upgrading PHP fails CI by
+      # design — the "vulnerability is gone" signal for this demo.
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: "8.5"
+          ini-values: >-
+            memory_limit=64M,
+            session.upload_progress.enabled=On,
+            session.upload_progress.cleanup=Off
+      - run: php tests/run.php
