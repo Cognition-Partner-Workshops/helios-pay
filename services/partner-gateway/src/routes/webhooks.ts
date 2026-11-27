@@ -4,7 +4,7 @@ import { Router } from "express";
 
 import { requireAuth } from "../middleware/auth";
 import { dispatchWebhook, type Webhook } from "../lib/dispatch";
-import { assertAllowedUrl } from "../lib/urlguard";
+import { resolveAllowedTarget, UrlNotAllowedError } from "../lib/urlguard";
 
 interface WebhookRequest {
   url: string;
@@ -15,14 +15,14 @@ const webhooks = new Map<string, Webhook>();
 export const webhooksRouter = Router();
 webhooksRouter.use(requireAuth);
 
-webhooksRouter.post("/", (request, response) => {
+webhooksRouter.post("/", async (request, response) => {
   const { url, events } = request.body as Partial<WebhookRequest>;
   if (!url || !Array.isArray(events)) {
     response.status(400).json({ error: "url and events are required" });
     return;
   }
   try {
-    assertAllowedUrl(url);
+    await resolveAllowedTarget(url);
   } catch (error) {
     response.status(400).json({ error: error instanceof Error ? error.message : "invalid URL" });
     return;
@@ -42,6 +42,10 @@ webhooksRouter.post("/:id/send", async (request, response) => {
     const result = await dispatchWebhook(webhook, request.body?.payload);
     response.json(result);
   } catch (error) {
+    if (error instanceof UrlNotAllowedError) {
+      response.status(400).json({ error: error.message });
+      return;
+    }
     response.status(502).json({ error: error instanceof Error ? error.message : "dispatch failed" });
   }
 });

@@ -1,6 +1,8 @@
 import { createHmac } from "node:crypto";
 
 import { WEBHOOK_HMAC_KEY } from "../config";
+import { postJson } from "./transport";
+import { resolveAllowedTarget } from "./urlguard";
 
 export interface Webhook {
   id: string;
@@ -23,27 +25,23 @@ export async function dispatchWebhook(
   let targetUrl = webhook.url;
 
   for (let redirectCount = 0; redirectCount <= 5; redirectCount += 1) {
-    const response = await fetch(targetUrl, {
-      method: "POST",
-      headers: {
-        "content-type": "application/json",
-        "X-Helios-Signature": signature,
-      },
-      body,
-      redirect: "manual",
+    // Checked on every hop; the request connects only to the addresses checked here.
+    const target = await resolveAllowedTarget(targetUrl);
+    const response = await postJson(target, body, {
+      "content-type": "application/json",
+      "X-Helios-Signature": signature,
     });
     if (response.status < 300 || response.status >= 400) {
       return {
         finalUrl: targetUrl,
         status: response.status,
-        bodySnippet: (await response.text()).slice(0, 512),
+        bodySnippet: response.body.slice(0, 512),
       };
     }
-    const location = response.headers.get("location");
-    if (!location) {
+    if (!response.location) {
       return { finalUrl: targetUrl, status: response.status, bodySnippet: "" };
     }
-    targetUrl = new URL(location, targetUrl).toString();
+    targetUrl = new URL(response.location, targetUrl).toString();
   }
   throw new Error("webhook redirect limit exceeded");
 }
