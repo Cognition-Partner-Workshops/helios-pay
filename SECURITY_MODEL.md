@@ -1,8 +1,8 @@
-# Helios Pay — threat model
+# Helios Pay — security model
 
-Built from `Cognition-Partner-Workshops/helios-pay` at `5ad1a6c`. Sources: `README.md`, `SECURITY.md`, `docker-compose.yml`, `.env.example`, `services/*`, `web/`, `infra/`.
+The security model of `Cognition-Partner-Workshops/helios-pay`, written for security scans and triage of imported findings (the HeliosSAST SARIF and the pentest CSV in `security/baseline/`). Built at `5ad1a6c` from `README.md`, `SECURITY.md`, `docker-compose.yml`, `.env.example`, `services/*`, `web/` and `infra/`.
 
-> `SECURITY.md` says Helios Pay is **intentionally vulnerable** and meant to run only on an isolated local or workshop network. The user chose to judge it as production, as Claude Security's assessments do.
+> `SECURITY.md` says Helios Pay is **intentionally vulnerable** and meant to run only on an isolated local or workshop network. The system owner chose to judge it as production.
 
 ## System overview and components
 
@@ -18,7 +18,7 @@ Helios Pay is a multi-tenant B2B payments and invoice platform. Tenants (`acme`,
 
 ### Trust boundaries
 - Internet → web (:3000), core-api (:8000) and partner-gateway (:8080).
-- Internal network → ledger-worker (:8090) and core-api `/admin/metrics`: internal-only in a real deployment (user's answer), although `docker-compose.yml` publishes :8090 and redis (:6379) to the host.
+- Internal network → ledger-worker (:8090) and core-api `/admin/metrics`: internal-only in a real deployment (owner's decision), although `docker-compose.yml` publishes :8090 and redis (:6379) to the host.
 - Service → Postgres: one shared `helios` database. Every service uses the same superuser / RDS master account.
 - Tenant ↔ tenant: isolation is application-enforced only (`require_tenant` in `app/services/authz.py`, or `tenant_id` filters in queries).
 - Partner gateway → arbitrary partner URLs (outbound webhooks). In AWS, the instance metadata service is reachable; in compose, the `metadata` service stands in for it.
@@ -37,7 +37,7 @@ Helios Pay is a multi-tenant B2B payments and invoice platform. Tenants (`acme`,
 - **Infrastructure:** RDS instance, S3 documents bucket, IAM roles, and cloud metadata credentials.
 
 ## Attacker profiles
-- **Who can get an account (user's answer):** anyone on the internet, through public sign-up. An attacker with a low-privilege account is therefore as likely as an anonymous one.
+- **Who can get an account (owner's decision):** anyone on the internet, through public sign-up. An attacker with a low-privilege account is therefore as likely as an anonymous one.
 - Unauthenticated internet attacker reaching the public services: web console, core-api and partner-gateway.
 - Low-privilege user (`viewer`) in one tenant, after another tenant's data or a higher role.
 - `operator` in one tenant (can create invoices, upload statements and run bulk imports).
@@ -97,15 +97,17 @@ Helios Pay is a multi-tenant B2B payments and invoice platform. Tenants (`acme`,
 - **Infrastructure (CWE-668, CWE-250):**
   - RDS is not publicly accessible, and no security group opens 5432 to `0.0.0.0/0` (`infra/terraform/network.tf`, `rds.tf`).
   - Applications use a least-privilege DB role.
-  - The S3 documents bucket is private. `infra/terraform/s3.tf` sets it `public-read`, which the Claude Security export does not report.
+  - The S3 documents bucket is private. `infra/terraform/s3.tf` sets it `public-read` (HeliosSAST `V13-S3`, pentest `PT-004`).
 
-## Decisions from the user
+## Decisions from the system owner
 - **Treat as production:** internet-facing, with real tenants and real money. The demo framing in `SECURITY.md` and `demo/SETUP.md` does not lower any finding.
 - **Internal-only surfaces:** the ledger worker (`/refunds`, :8090) and core-api `/admin/metrics` are internal-only in a real deployment. An internet attacker cannot reach them directly; they matter for an attacker already inside the network, or one who gets there through another flaw (for example SSRF from the partner gateway).
-- **Triage scope:** weed out only duplicates and false positives. Seeded accounts and default secrets stay in scope.
+- **Triage scope:** weed out duplicates and false positives. Seeded accounts and default secrets stay in scope.
+- **Style notes:** HeliosSAST `STYLE*` results (code style, no security claim) are dismissed as not actionable.
+- **Pentest vs SAST overlap:** a pentest row and a HeliosSAST result for the same flaw at the same location (e.g. `PT-003`/`V10`, `PT-004`/`V13-S3`) are duplicates: keep the more complete one open, dismiss the other as duplicate.
 
 ## Out of scope / accepted risk
-- None. The user ruled nothing out and accepted no risk.
+- None. The owner ruled nothing out and accepted no risk.
 
 ## Open questions
-- Which assets matter most? Until the user says, tenant billing data and money movement are assumed to rank highest.
+- Which assets matter most? Until the owner says, tenant billing data and money movement are assumed to rank highest.
