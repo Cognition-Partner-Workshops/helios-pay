@@ -1,12 +1,17 @@
+from typing import Literal
 from uuid import UUID
 
 from pydantic import BaseModel, Field
 
+InvoiceSortColumn = Literal[
+    "id", "number", "customer_name", "amount_cents", "currency", "status", "created_at"
+]
+
 
 class InvoiceSearch(BaseModel):
     q: str = ""
-    sort: str = "created_at"
-    direction: str = "DESC"
+    sort: InvoiceSortColumn = "created_at"
+    direction: Literal["ASC", "DESC"] = "DESC"
 
 
 class InvoiceCreate(BaseModel):
