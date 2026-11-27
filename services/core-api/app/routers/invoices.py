@@ -36,7 +36,7 @@ def list_invoices(
     try:
         return search_invoices(db, search, claims)
     except SQLAlchemyError as exc:
-        raise HTTPException(status_code=400, detail=str(exc)) from exc
+        raise HTTPException(status_code=400, detail="Invoice search failed") from exc
 
 
 @router.get("/export")
