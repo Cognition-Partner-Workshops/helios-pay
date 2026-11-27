@@ -6,11 +6,13 @@ on:
     paths:
       - "services/**"
       - "web/**"
+      - "infra/terraform/**"
       - ".github/workflows/ci.yml"
   pull_request:
     paths:
       - "services/**"
       - "web/**"
+      - "infra/terraform/**"
       - ".github/workflows/ci.yml"
 
 jobs:
@@ -96,6 +98,22 @@ jobs:
       - run: npm ci
       - run: npm run lint
       - run: npm run build
+
+  terraform:
+    if: github.event_name == 'pull_request' || contains(join(github.event.commits.*.modified, ' '), 'infra/terraform')
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: infra/terraform
+    steps:
+      - uses: actions/checkout@v4
+      - uses: hashicorp/setup-terraform@v3
+        with:
+          terraform_version: "1.9.8"
+      - run: terraform init -backend=false -input=false
+      - run: terraform fmt -check -recursive
+      - run: terraform validate
+      - run: terraform test
 
   statement-service:
     if: github.event_name == 'pull_request' || contains(join(github.event.commits.*.modified, ' '), 'services/statement-service')

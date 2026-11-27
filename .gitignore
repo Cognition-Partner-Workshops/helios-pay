@@ -30,3 +30,6 @@ services/ledger-worker/bin/
 coverage/
 uploads/
 tmp/
+
+# --- Terraform ---
+.terraform/
