@@ -1,11 +1,11 @@
-# PHP 8.5.11 is below the 8.5.12 patched floor, so this runtime is affected by
-# PHP2Shell (CVE-2026-109618, CVE-2026-109619). mod_php is the highest-risk SAPI.
-# INTENTIONALLY VULNERABLE — demo use only. Do not deploy.
-FROM php:8.5.11-apache-bookworm
+# PHP 8.5.12 is the patched floor of the 8.5 branch for PHP2Shell
+# (CVE-2026-109618, CVE-2026-109619). Do not pin a release below it;
+# tests/run.php fails the build's test run if the runtime is affected.
+FROM php:8.5.12-apache-bookworm
 
 RUN docker-php-ext-install session >/dev/null 2>&1 || true
 
-COPY conf/php-vuln.ini /usr/local/etc/php/conf.d/zz-php2shell-vuln.ini
+COPY conf/php.ini /usr/local/etc/php/conf.d/zz-statement-service.ini
 COPY conf/remittance.conf /etc/apache2/sites-available/000-default.conf
 
 WORKDIR /var/www/html
